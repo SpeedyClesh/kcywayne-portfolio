@@ -1,71 +1,173 @@
+"use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { signOut } from "next-auth/react";
 
-const stats = [
-  { label: "Total Posts", value: "6", icon: "📝", color: "#00d4ff" },
-  { label: "Subscribers", value: "0", icon: "🔔", color: "#22c55e" },
-  { label: "Telegram Sent", value: "0", icon: "📨", color: "#8b5cf6" },
-  { label: "Total Views", value: "0", icon: "👁️", color: "#f59e0b" },
-];
-
-const recentPosts = [
-  { title: "Why TON Blockchain is the Future", date: "May 5, 2025", tag: "TON", status: "Published" },
-  { title: "How I Made My First $1K Online", date: "May 2, 2025", tag: "Money", status: "Published" },
-  { title: "Mindset Shifts That Changed Everything", date: "Apr 28, 2025", tag: "Mindset", status: "Published" },
-];
+interface Post {
+  id: string;
+  title: string;
+  tag: string;
+  published: boolean;
+  createdAt: string;
+}
 
 export default function Dashboard() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [subscribers, setSubscribers] = useState(0);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ title: "", content: "", excerpt: "", tag: "TON", published: false });
+
+  useEffect(() => { fetchPosts(); fetchSubscribers(); }, []);
+
+  const fetchPosts = async () => {
+    const res = await fetch("/api/posts/all");
+    const data = await res.json();
+    setPosts(Array.isArray(data) ? data : []);
+  };
+
+  const fetchSubscribers = async () => {
+    const res = await fetch("/api/subscribers");
+    const data = await res.json();
+    setSubscribers(Array.isArray(data) ? data.length : 0);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.title || !form.content) return alert("Title and content required");
+    setLoading(true);
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const post = await res.json();
+    setLoading(false);
+    if (res.ok) {
+      setShowForm(false);
+      setForm({ title: "", content: "", excerpt: "", tag: "TON", published: false });
+      fetchPosts();
+      if (form.published && post.id) {
+        await fetch("/api/telegram", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId: post.id }),
+        });
+      }
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this post?")) return;
+    await fetch(`/api/posts/${id}`, { method: "DELETE" });
+    fetchPosts();
+  };
+
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#0a0a0f" }}>
-      <nav style={{ borderBottom: "1px solid #1e293b", backgroundColor: "#0d1117" }}
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <main style={{ backgroundColor: "#0a0a0f", minHeight: "100vh" }}>
+      <nav style={{ borderBottom: "1px solid #1e293b", backgroundColor: "#0d1117", position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Image src="/images/kc_pfp.jpg" alt="Kcywayne" width={36} height={36}
-            className="rounded-full" style={{ border: "2px solid #00d4ff" }} />
-          <span className="font-bold" style={{ color: "#00d4ff" }}>Kcywayne CMS</span>
+            style={{ borderRadius: "50%", border: "2px solid #00d4ff" }} />
+          <span style={{ fontWeight: "bold", color: "#00d4ff" }}>Kcywayne CMS</span>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-xs hover:opacity-80" style={{ color: "#94a3b8" }}>View Site</Link>
-          <button className="text-xs px-3 py-2 rounded-lg hover:opacity-80"
-            style={{ backgroundColor: "#1e293b", color: "#94a3b8" }}>Sign Out</button>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <Link href="/" style={{ fontSize: "12px", color: "#94a3b8", textDecoration: "none" }}>View Site</Link>
+          <button onClick={() => signOut({ callbackUrl: "/login" })}
+            style={{ fontSize: "12px", padding: "8px 12px", borderRadius: "8px", backgroundColor: "#1e293b", color: "#94a3b8", border: "none", cursor: "pointer" }}>
+            Sign Out
+          </button>
         </div>
       </nav>
-      <div className="max-w-5xl mx-auto px-6 pt-24 pb-20">
-        <div className="flex items-center justify-between mb-10">
+
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "100px 24px 80px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "40px" }}>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#f1f5f9" }}>Dashboard</h1>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Welcome back, Kcywayne 👋</p>
+            <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#f1f5f9", margin: 0 }}>Dashboard</h1>
+            <p style={{ fontSize: "14px", color: "#94a3b8", marginTop: "4px" }}>Welcome back, Kcywayne 👋</p>
           </div>
-          <button className="px-5 py-2 rounded-lg font-semibold text-sm hover:opacity-80"
-            style={{ backgroundColor: "#00d4ff", color: "#0a0a0f" }}>+ New Post</button>
+          <button onClick={() => setShowForm(!showForm)}
+            style={{ padding: "10px 20px", borderRadius: "8px", fontWeight: "600", fontSize: "14px", backgroundColor: "#00d4ff", color: "#0a0a0f", border: "none", cursor: "pointer" }}>
+            + New Post
+          </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {stats.map((stat) => (
-            <div key={stat.label} className="p-5 rounded-xl" style={{ backgroundColor: "#111827", border: "1px solid #1e293b" }}>
-              <div className="text-2xl mb-2">{stat.icon}</div>
-              <p className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
-              <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>{stat.label}</p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "40px" }}>
+          {[
+            { label: "Total Posts", value: posts.length, icon: "📝", color: "#00d4ff" },
+            { label: "Subscribers", value: subscribers, icon: "🔔", color: "#22c55e" },
+            { label: "Published", value: posts.filter(p => p.published).length, icon: "📨", color: "#8b5cf6" },
+            { label: "Drafts", value: posts.filter(p => !p.published).length, icon: "📄", color: "#f59e0b" },
+          ].map((stat) => (
+            <div key={stat.label} style={{ padding: "20px", borderRadius: "12px", backgroundColor: "#111827", border: "1px solid #1e293b" }}>
+              <div style={{ fontSize: "24px", marginBottom: "8px" }}>{stat.icon}</div>
+              <p style={{ fontSize: "24px", fontWeight: "bold", color: stat.color, margin: 0 }}>{stat.value}</p>
+              <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>{stat.label}</p>
             </div>
           ))}
         </div>
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#111827", border: "1px solid #1e293b" }}>
-          <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #1e293b" }}>
-            <h2 className="font-semibold" style={{ color: "#f1f5f9" }}>Recent Posts</h2>
-            <Link href="/posts" className="text-xs hover:opacity-80" style={{ color: "#00d4ff" }}>View all</Link>
-          </div>
-          {recentPosts.map((post, i) => (
-            <div key={i} className="px-6 py-4 flex items-center justify-between"
-              style={{ borderBottom: i < recentPosts.length - 1 ? "1px solid #1e293b" : "none" }}>
-              <div>
-                <p className="text-sm font-medium" style={{ color: "#f1f5f9" }}>{post.title}</p>
-                <p className="text-xs mt-1" style={{ color: "#475569" }}>{post.date} · {post.tag}</p>
+
+        {showForm && (
+          <div style={{ marginBottom: "40px", padding: "24px", borderRadius: "12px", backgroundColor: "#111827", border: "1px solid #00d4ff" }}>
+            <h2 style={{ fontWeight: "bold", marginBottom: "24px", fontSize: "18px", color: "#f1f5f9" }}>New Post</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: "8px", fontSize: "14px", outline: "none", backgroundColor: "#0d1117", border: "1px solid #1e293b", color: "#f1f5f9", boxSizing: "border-box" }} />
+              <input placeholder="Excerpt (short summary)" value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                style={{ width: "100%", padding: "12px 16px", borderRadius: "8px", fontSize: "14px", outline: "none", backgroundColor: "#0d1117", border: "1px solid #1e293b", color: "#f1f5f9", boxSizing: "border-box" }} />
+              <textarea placeholder="Content (full post)" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
+                rows={8} style={{ width: "100%", padding: "12px 16px", borderRadius: "8px", fontSize: "14px", outline: "none", backgroundColor: "#0d1117", border: "1px solid #1e293b", color: "#f1f5f9", resize: "vertical", boxSizing: "border-box" }} />
+              <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                <select value={form.tag} onChange={(e) => setForm({ ...form, tag: e.target.value })}
+                  style={{ padding: "12px 16px", borderRadius: "8px", fontSize: "14px", outline: "none", backgroundColor: "#0d1117", border: "1px solid #1e293b", color: "#f1f5f9" }}>
+                  <option>TON</option>
+                  <option>Money</option>
+                  <option>Mindset</option>
+                  <option>General</option>
+                </select>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#94a3b8", cursor: "pointer" }}>
+                  <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} />
+                  Publish + Notify Telegram
+                </label>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: "#00d4ff20", color: "#00d4ff" }}>{post.status}</span>
-                <button className="text-xs hover:opacity-80" style={{ color: "#94a3b8" }}>Edit</button>
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button onClick={handleSubmit} disabled={loading}
+                  style={{ padding: "12px 24px", borderRadius: "8px", fontWeight: "600", fontSize: "14px", backgroundColor: "#00d4ff", color: "#0a0a0f", border: "none", cursor: "pointer", opacity: loading ? 0.5 : 1 }}>
+                  {loading ? "Saving..." : "Save Post"}
+                </button>
+                <button onClick={() => setShowForm(false)}
+                  style={{ padding: "12px 24px", borderRadius: "8px", fontWeight: "600", fontSize: "14px", backgroundColor: "#1e293b", color: "#94a3b8", border: "none", cursor: "pointer" }}>
+                  Cancel
+                </button>
               </div>
             </div>
-          ))}
+          </div>
+        )}
+
+        <div style={{ borderRadius: "12px", overflow: "hidden", backgroundColor: "#111827", border: "1px solid #1e293b" }}>
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid #1e293b" }}>
+            <h2 style={{ fontWeight: "600", color: "#f1f5f9", margin: 0 }}>All Posts</h2>
+          </div>
+          {posts.length === 0 ? (
+            <div style={{ padding: "40px 24px", textAlign: "center", fontSize: "14px", color: "#475569" }}>
+              No posts yet. Click "+ New Post" to create your first one!
+            </div>
+          ) : (
+            posts.map((post, i) => (
+              <div key={post.id} style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: i < posts.length - 1 ? "1px solid #1e293b" : "none" }}>
+                <div>
+                  <p style={{ fontSize: "14px", fontWeight: "500", color: "#f1f5f9", margin: 0 }}>{post.title}</p>
+                  <p style={{ fontSize: "12px", color: "#475569", marginTop: "4px" }}>{new Date(post.createdAt).toLocaleDateString()} · {post.tag}</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "9999px", backgroundColor: post.published ? "#00d4ff20" : "#f59e0b20", color: post.published ? "#00d4ff" : "#f59e0b" }}>
+                    {post.published ? "Published" : "Draft"}
+                  </span>
+                  <button onClick={() => handleDelete(post.id)} style={{ fontSize: "12px", color: "#ef4444", background: "none", border: "none", cursor: "pointer" }}>Delete</button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </main>

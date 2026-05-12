@@ -11,55 +11,50 @@ const mockPosts = [
 ];
 
 const tagColors: Record<string, string> = {
-  TON: "#00d4ff",
-  Money: "#22c55e",
-  Mindset: "#8b5cf6",
+  TON: "#00d4ff", Money: "#22c55e", Mindset: "#8b5cf6",
 };
 
 export default function PostsPage() {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#0a0a0f" }}>
-      <nav style={{ borderBottom: "1px solid #1e293b", backgroundColor: "#0d1117" }}
-        className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Image src="/images/kc_pfp.jpg" alt="Kcywayne" width={40} height={40}
-            className="rounded-full" style={{ border: "2px solid #00d4ff" }} />
-          <span className="font-bold text-lg" style={{ color: "#00d4ff" }}>Kcywayne</span>
+    <main style={{ minHeight: "100vh", backgroundColor: "#0a0a0f" }}>
+      <nav style={{ borderBottom: "1px solid #1e293b", backgroundColor: "#0d1117", position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Image src="/images/kc_pfp.jpg" alt="Kcywayne" width={40} height={40} style={{ borderRadius: "50%", border: "2px solid #00d4ff" }} />
+          <span style={{ fontWeight: "bold", fontSize: "18px", color: "#00d4ff" }}>Kcywayne</span>
         </div>
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-sm hover:text-cyan-400 transition-colors" style={{ color: "#94a3b8" }}>Home</Link>
-          <Link href="/posts" className="text-sm" style={{ color: "#00d4ff" }}>Insights</Link>
-          <Link href="/#subscribe" className="text-sm px-4 py-2 rounded-lg font-medium hover:opacity-80" style={{ backgroundColor: "#00d4ff", color: "#0a0a0f" }}>Subscribe</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+          <Link href="/" style={{ fontSize: "14px", color: "#94a3b8", textDecoration: "none" }}>Home</Link>
+          <Link href="/posts" style={{ fontSize: "14px", color: "#00d4ff", textDecoration: "none" }}>Insights</Link>
+          <Link href="/#subscribe" style={{ fontSize: "14px", padding: "8px 16px", borderRadius: "8px", fontWeight: "500", backgroundColor: "#00d4ff", color: "#0a0a0f", textDecoration: "none" }}>Subscribe</Link>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-6 pt-28 pb-20">
-        <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold mb-3" style={{ color: "#f1f5f9" }}>Insights 💡</h1>
-          <p className="text-sm" style={{ color: "#94a3b8" }}>Thoughts, builds and strategies from Kcywayne</p>
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "112px 24px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "#f1f5f9", margin: "0 0 12px" }}>Insights 💡</h1>
+          <p style={{ fontSize: "14px", color: "#94a3b8" }}>Thoughts, builds and strategies from Kcywayne</p>
         </div>
-        <div className="flex gap-3 justify-center mb-10 flex-wrap">
+
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "40px", flexWrap: "wrap" }}>
           {["All", "TON", "Money", "Mindset"].map((filter) => (
-            <button key={filter} className="px-4 py-2 rounded-full text-sm font-medium hover:opacity-80"
-              style={{ backgroundColor: filter === "All" ? "#00d4ff" : "#111827", color: filter === "All" ? "#0a0a0f" : "#94a3b8", border: "1px solid #1e293b" }}>
+            <button key={filter} style={{ padding: "8px 16px", borderRadius: "9999px", fontSize: "14px", fontWeight: "500", backgroundColor: filter === "All" ? "#00d4ff" : "#111827", color: filter === "All" ? "#0a0a0f" : "#94a3b8", border: "1px solid #1e293b", cursor: "pointer" }}>
               {filter}
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
           {mockPosts.map((post) => (
-            <div key={post.id} className="p-6 rounded-xl transition-all hover:scale-105 cursor-pointer"
-              style={{ backgroundColor: "#111827", border: "1px solid #1e293b" }}>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs px-3 py-1 rounded-full font-medium"
-                  style={{ backgroundColor: `${tagColors[post.tag]}20`, color: tagColors[post.tag] }}>
+            <div key={post.id} style={{ padding: "24px", borderRadius: "12px", backgroundColor: "#111827", border: "1px solid #1e293b", cursor: "pointer", transition: "transform 0.2s" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <span style={{ fontSize: "12px", padding: "4px 12px", borderRadius: "9999px", fontWeight: "500", backgroundColor: `${tagColors[post.tag]}20`, color: tagColors[post.tag] }}>
                   {post.tag}
                 </span>
-                <span className="text-xs" style={{ color: "#475569" }}>{post.date}</span>
+                <span style={{ fontSize: "12px", color: "#475569" }}>{post.date}</span>
               </div>
-              <h2 className="font-bold text-base mb-2" style={{ color: "#f1f5f9" }}>{post.title}</h2>
-              <p className="text-sm mb-4" style={{ color: "#94a3b8" }}>{post.excerpt}</p>
-              <div className="flex items-center gap-2 text-xs font-medium" style={{ color: "#00d4ff" }}>
+              <h2 style={{ fontWeight: "bold", fontSize: "16px", color: "#f1f5f9", margin: "0 0 8px" }}>{post.title}</h2>
+              <p style={{ fontSize: "14px", color: "#94a3b8", marginBottom: "16px", lineHeight: "1.6" }}>{post.excerpt}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", fontWeight: "500", color: "#00d4ff" }}>
                 <span>Read more</span><span>→</span>
               </div>
             </div>
@@ -67,10 +62,10 @@ export default function PostsPage() {
         </div>
       </div>
 
-      <footer className="px-6 py-8 text-center" style={{ borderTop: "1px solid #1e293b", backgroundColor: "#0d1117" }}>
-        <p className="text-xs" style={{ color: "#94a3b8" }}>
+      <footer style={{ padding: "32px 24px", textAlign: "center", borderTop: "1px solid #1e293b", backgroundColor: "#0d1117" }}>
+        <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
           © 2025 Kcywayne · Built on TON 💎 ·{" "}
-          <a href="https://t.me/tonversalphas" target="_blank" style={{ color: "#00d4ff" }}>Join Telegram</a>
+          <a href="https://t.me/tonversalphas" target="_blank" style={{ color: "#00d4ff", textDecoration: "none" }}>Join Telegram</a>
         </p>
       </footer>
     </main>
